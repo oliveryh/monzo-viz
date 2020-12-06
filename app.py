@@ -8,33 +8,73 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
 import pandas as pd
+from dash.dependencies import Input, Output
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+from monzoviz.source import MonzoData
+data = MonzoData('data/monzo.csv')
+df = data.get_outgoings()
+categories = data.get_categories()
+from monzoviz import plot
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+import dash
+import dash_bootstrap_components as dbc
 
-# assume you have a "long-form" data frame
-# see https://plotly.com/python/px-arguments/ for more options
-df = pd.DataFrame({
-    "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-    "Amount": [4, 1, 2, 2, 4, 5],
-    "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"]
-})
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+import plotly.express as px
+from jupyter_dash import JupyterDash
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output# Load Data
+app = JupyterDash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
+categories = data.get_categories()
+categories = categories[1:]
 
-app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
 
-    html.Div(children='''
-        Dash: A web application framework for Python.
-    '''),
+controls = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Label("Category"),
+                dcc.Dropdown(
+                    id="category-variable",
+                    options=[
+                        {"label": col, "value": col} for col in categories
+                    ],
+                    value="Bills",
+                ),
+            ]
+        ),
+    ],
+    body=True,
+)
 
-    dcc.Graph(
-        id='example-graph',
-        figure=fig
-    )
-])
+app.layout = dbc.Container(
+    [
+        html.H1("Monzo Plot"),
+        html.Hr(),
+        dbc.Row(
+            [
+                dbc.Col(controls, md=4),
+                dbc.Col(dcc.Graph(id="outgoings-graph"), md=8),
+            ],
+            align="center",
+        ),
+    ],
+    fluid=True,
+)
+
+
+@app.callback(
+    Output("outgoings-graph", "figure"),
+    [
+        Input("category-variable", "value"),
+    ],
+)
+def make_graph(category):
+    # minimal input validation, make sure there's at least one cluster
+    df_category = df[df['category'] == category]
+    return plot.plotly_stacked_bar(df_category, 'entity')
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=12000)
