@@ -53,6 +53,7 @@ app.layout = dbc.Container(
     [
         html.H1("Monzo Plot"),
         html.Hr(),
+        html.H3("Grouped Outgoings Per Month"),
         dbc.Row(
             [
                 dbc.Col(controls, md=4),
@@ -60,9 +61,17 @@ app.layout = dbc.Container(
             ],
             align="center",
         ),
+        html.H3("Outgoings Over Time"),
+        dbc.Row(
+            [
+                dbc.Col(dcc.Graph(figure=plot.plotly_ongoing_balance(df)), md=12),
+            ],
+            align="center",
+        ),
     ],
     fluid=True,
 )
+
 
 
 @app.callback(
@@ -75,6 +84,7 @@ def make_graph(category):
     # minimal input validation, make sure there's at least one cluster
     df_category = df[df['category'] == category]
     return plot.plotly_stacked_bar(df_category, 'entity')
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=12000)

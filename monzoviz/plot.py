@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import plotly.express as px
 import pandas as pd
 
 def group_date(df):
@@ -42,4 +43,10 @@ def plotly_stacked_bar(df, att_groups, year_start=2017, year_end=2020):
     # Change the bar mode
     fig.update_layout(barmode='stack')
     
+    return fig
+
+def plotly_ongoing_balance(df):
+
+    df_grouped_day = df[["date", "balance"]].groupby(by=["date"]).max().reset_index()
+    fig = px.line(df_grouped_day, x="date", y="balance")
     return fig
